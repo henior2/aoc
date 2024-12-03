@@ -1,0 +1,77 @@
+package main
+
+// doesn't work
+
+import (
+	"fmt"
+	"os"
+
+	"regexp"
+)
+
+func check(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
+func regexCompileFind(pattern, source string) ([][]int, error) {
+	r, err := regexp.Compile(pattern)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FindAllStringIndex(source, -1), nil
+}
+
+func main() {
+	data_b, err := os.ReadFile("03.in")
+	check(err)
+
+	data := string(data_b)
+
+	mMul, err := regexCompileFind(`mul\(\d{1,3},\d{1,3}\)`, data)
+	check(err)
+
+	mDo, err := regexCompileFind(`do\(\)`, data)
+	check(err)
+
+	mDont, err := regexCompileFind(`don't\(\)`, data)
+	check(err)
+
+	lastDo, lastDont := 0, 0
+
+	result := 0
+
+	for _, m := range mMul {
+		start, end := m[0], m[1]
+
+		for lastDo + 1 < len(mDo) {
+			if mDo[lastDo + 1][0] > start {
+				break
+			}
+			lastDo++
+		}
+
+		for lastDont + 1 < len(mDont) {
+			if mDo[lastDont + 1][0] > start {
+				break
+			}
+			lastDont++
+		}
+
+
+		if !(lastDo == 0 && lastDont == 0) && mDont[lastDont][0] > mDo[lastDo][0] {
+			continue
+		}
+		
+		var a, b int
+		fmt.Sscanf(data[start:end], "mul(%d,%d)", &a, &b)
+
+		result += a * b
+	}
+
+	fmt.Printf("Sum: %d\n", result)
+
+}

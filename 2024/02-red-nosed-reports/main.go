@@ -57,7 +57,7 @@ func isSafe(report []int, skip int) bool {
 }
 
 func main() {
-	data, err := os.ReadFile("../02.in")
+	data, err := os.ReadFile("02.in")
 	check(err)
 
 	lines := strings.Split(string(data), "\n")

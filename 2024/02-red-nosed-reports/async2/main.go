@@ -6,7 +6,12 @@ import (
 
 	"strconv"
 	"strings"
+
+	"sync"
+	"sync/atomic"
 )
+
+const WORKERS = 4
 
 func check(err error) {
 	if err != nil {
@@ -25,7 +30,7 @@ func isSafe(report []int, skip int) bool {
 	prev := 0
 	increasing := false
 
-	hadSkipped := 0
+	hadSkipped := 0	
 
 	for i, v := range report {
 		if i == skip {
@@ -56,13 +61,37 @@ func isSafe(report []int, skip int) bool {
 	return true
 }
 
+func worker(jobs <-chan []int, wg *sync.WaitGroup, safeReports *atomic.Uint64) {
+	defer wg.Done()
+	
+	for report := range jobs {
+		for i := range report {
+			if isSafe(report, i) {
+				// fmt.Println(report, i)
+	
+				safeReports.Add(1)
+				break
+			}
+		}
+	}
+}
+
+
 func main() {
 	data, err := os.ReadFile("../02.in")
 	check(err)
 
 	lines := strings.Split(string(data), "\n")
 
-	safeReports := 0
+	var wg sync.WaitGroup
+	var safeReports atomic.Uint64
+
+	jobs := make(chan []int, len(lines))
+
+	for range WORKERS {
+		wg.Add(1)
+		go worker(jobs, &wg, &safeReports)
+	}
 
 	for _, line := range lines {
 		line = strings.Trim(line, " ")
@@ -79,14 +108,12 @@ func main() {
 		// 	safeReports++
 		// }
 
-		for i := range report {
-			if isSafe(report, i) {
-				// fmt.Println(report, i)
-				safeReports++
-				break
-			}
-		}
+		jobs <- report
 	}
 
-	fmt.Println("Safe reports:", safeReports)
+	close(jobs)
+
+	wg.Wait()
+
+	fmt.Println("Safe reports:", safeReports.Load())
 }

@@ -6,6 +6,9 @@ import (
 
 	"strconv"
 	"strings"
+
+	"sync"
+	"sync/atomic"
 )
 
 func check(err error) {
@@ -25,7 +28,7 @@ func isSafe(report []int, skip int) bool {
 	prev := 0
 	increasing := false
 
-	hadSkipped := 0
+	hadSkipped := 0	
 
 	for i, v := range report {
 		if i == skip {
@@ -56,13 +59,27 @@ func isSafe(report []int, skip int) bool {
 	return true
 }
 
+func dampener(report []int, wg *sync.WaitGroup, safeReports *atomic.Uint64) {
+	defer wg.Done()
+	
+	for i := range report {
+		if isSafe(report, i) {
+			// fmt.Println(report, i)
+
+			safeReports.Add(1)
+			return
+		}
+	}
+}
+
 func main() {
 	data, err := os.ReadFile("../02.in")
 	check(err)
 
 	lines := strings.Split(string(data), "\n")
 
-	safeReports := 0
+	var wg sync.WaitGroup
+	var safeReports atomic.Uint64
 
 	for _, line := range lines {
 		line = strings.Trim(line, " ")
@@ -79,14 +96,11 @@ func main() {
 		// 	safeReports++
 		// }
 
-		for i := range report {
-			if isSafe(report, i) {
-				// fmt.Println(report, i)
-				safeReports++
-				break
-			}
-		}
+		wg.Add(1)
+		go dampener(report, &wg, &safeReports)
 	}
 
-	fmt.Println("Safe reports:", safeReports)
+	 
+
+	fmt.Println("Safe reports:", safeReports.Load())
 }

@@ -75,7 +75,7 @@ func main() {
 			check(err)
 		}
 
-		// if isSafe(report) {
+		// if isSafe(report, -1) {
 		// 	safeReports++
 		// }
 

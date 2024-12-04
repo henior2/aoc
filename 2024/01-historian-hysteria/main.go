@@ -15,8 +15,12 @@ func abs(x int) int {
 }
 
 func main() {
-	
-	data, err := os.ReadFile("01.in")
+	filename := "01.in"
+	if len(os.Args) > 1 {
+		filename = os.Args[1]
+	}
+
+	data, err := os.ReadFile(filename)
 	if (err != nil) {
 		panic(err)
 	}

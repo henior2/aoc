@@ -50,7 +50,12 @@ func byStart(a, b Instruction) int {
 }
 
 func main() {
-	data_b, err := os.ReadFile("03.in")
+	filename := "03.in"
+	if len(os.Args) > 1 {
+		filename = os.Args[1]
+	}
+
+	data_b, err := os.ReadFile(filename)
 	check(err)
 
 	data := string(data_b)
@@ -60,8 +65,8 @@ func main() {
 	
 	check( addCommand(`mul\(\d{1,3},\d{1,3}\)`, data, Mul, insts) )
 
+	// comment out for part 1
 	check( addCommand(`do\(\)`, data, Do, insts) )
-
 	check( addCommand(`don't\(\)`, data, Dont, insts) )
 
 	result := 0

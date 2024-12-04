@@ -73,7 +73,12 @@ func dampener(report []int, wg *sync.WaitGroup, safeReports *atomic.Uint64) {
 }
 
 func main() {
-	data, err := os.ReadFile("../02.in")
+	filename := "../02.in"
+	if len(os.Args) > 1 {
+		filename = os.Args[1]
+	}
+
+	data, err := os.ReadFile(filename)
 	check(err)
 
 	lines := strings.Split(string(data), "\n")

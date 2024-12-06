@@ -3,69 +3,35 @@ package main
 import (
 	"fmt"
 	"os"
-	"runtime"
-	"slices"
 	"strings"
+	"runtime"
 
 	"sync"
 	"sync/atomic"
 )
 
-const PART = 2
-
-type rulesMap map[int] map[int]bool
-
-type posMap map[int]int
-func (pos posMap) cmpPages(a int, b int) int {
-	posA, foundA := pos[a]
-	posB, foundB := pos[b]
-
-	if !foundA || !foundB {
-		return 1
-	}
-	
-	if posA < posB {
-		return 1
-	} else {
-		return -1
-	}
-}
-
-func checkUpdate(update []int, rules rulesMap, wg *sync.WaitGroup, midSum *atomic.Uint32) {
+func checkUpdate(update []int, rules [][2]int, wg *sync.WaitGroup, midSum *atomic.Uint32) {
 	defer wg.Done()
 
-	pos := make(posMap)
+	pos := make(map[int]int)
 	for i, v := range update {
 		pos[v] = i
 	}
 
-	part2sorted := false
+	for _, r := range rules {
+		pos1, pres1 := pos[r[0]]
+		pos2, pres2 := pos[r[1]]
 
-	for a, r := range rules {
-		for b := range r {
-			if pos.cmpPages(a, b) == 1 {
-				continue
-			}
+		if !pres1 || !pres2 {
+			continue
+		}
 
-			if PART == 2 {
-				fmt.Print(update, " -> ")
-				slices.SortFunc(update, pos.cmpPages)
-				fmt.Println(update)
-				part2sorted = true
-				break
-			}
-
+		if pos1 > pos2 {
 			return
 		}
-		if part2sorted {
-			break
-		}
-	}
-	
-	if PART == 1 || part2sorted {
-		midSum.Add(uint32(update[len(update) / 2]))
 	}
 
+	midSum.Add(uint32(update[len(update) / 2]))
 	// fmt.Println(update, "\n", pos, "\n")
 }
 
@@ -92,9 +58,9 @@ func main() {
 		rulesEnd++
 	}
 
-	rules := make(rulesMap)
+	rules := make([][2]int, rulesEnd)
 
-	for _, r := range lines[:rulesEnd] {
+	for i, r := range lines[:rulesEnd] {
 		var a, b int
 		n, err := fmt.Sscanf(r, "%d|%d", &a, &b)
 
@@ -102,11 +68,7 @@ func main() {
 			panic(err) // again, it's dumb
 		}
 
-		if rules[a] == nil {
-			rules[a] = make(map[int]bool)
-		}
-
-		rules[a][b] = true
+		rules[i] = [2]int{a, b}
 	}
 
 	var wg sync.WaitGroup
